@@ -16,36 +16,55 @@ def home():
 @app.route('/analyze', methods=['POST'])
 def analyze_skin():
     try:
-        # 1. Receive image data
         data = request.json
         image_data = data['image']
         
-        # Remove base64 header
         if ',' in image_data:
             clean_image = image_data.split(',')[1]
         else:
             clean_image = image_data
 
-        # 2. Call Face++ API
+        # Request Emotion and Skin Status
         payload = {
             'api_key': API_KEY,
             'api_secret': API_SECRET,
             'image_base64': clean_image,
-            'return_attributes': 'skinstatus,gender,age,emotion,beauty,eyestatus' 
+            'return_attributes': 'skinstatus,gender,age,emotion,beauty,eyestatus,smile' 
         }
         
         response = requests.post(API_URL, data=payload)
         result = response.json()
 
-        # 3. Process Result
         if 'faces' in result and len(result['faces']) > 0:
             face = result['faces'][0]['attributes']
             skin = face['skinstatus']
+            emotions = face['emotion']
             
-            # Calculate Eye Fatigue
-            left_eye = face['eyestatus']['left_eye_status']['no_glass_eye_close']
-            right_eye = face['eyestatus']['right_eye_status']['no_glass_eye_close']
-            fatigue_score = (left_eye + right_eye) / 2 
+            # 1. CALCULATE SLEEP TRACES
+            # Combination of Dark Circles + Eye Status (Closing)
+            left_eye_close = face['eyestatus']['left_eye_status']['no_glass_eye_close']
+            right_eye_close = face['eyestatus']['right_eye_status']['no_glass_eye_close']
+            avg_eye_closure = (left_eye_close + right_eye_close) / 2
+            
+            # Sleep Debt Score (0-100). Higher = More Sleep Deprived
+            sleep_trace = (skin['dark_circle'] + avg_eye_closure) / 2
+
+            # 2. CALCULATE STRESS TRACES
+            # Combination of Negative Emotions + Skin Health Drop
+            # (Sadness + Fear + Anger) blended with (100 - Skin Health)
+            neg_emotion = emotions['sadness'] + emotions['fear'] + emotions['anger']
+            health_inv = 100 - skin['health']
+            stress_trace = (neg_emotion + health_inv) / 2
+
+            # 3. MOLE / SPOT INTENSITY
+            # 'Stain' usually picks up moles and dark spots
+            mole_trace = skin['stain']
+
+            # 4. DIMPLE DETECTION (Heuristic based on Smile + Beauty)
+            # Real dimple detection needs depth sensors, but we can estimate probability
+            # based on smile depth and cheek contours.
+            is_smiling = face['smile']['value'] > 40
+            dimple_trace = "Possible" if (is_smiling and face['beauty']['female_score'] > 60) else "Not Detected"
 
             report = {
                 "health": skin['health'],
@@ -54,12 +73,14 @@ def analyze_skin():
                 "stain": skin['stain'],
                 "age": face['age']['value'],
                 "gender": face['gender']['value'],
-                "beauty": face['beauty']['female_score'] if face['gender']['value'] == 'Female' else face['beauty']['male_score'],
-                "fatigue": round(fatigue_score, 1)
+                "fatigue": round(sleep_trace, 1), # Renamed logic
+                "stress": round(stress_trace, 1),
+                "mole_intensity": mole_trace,
+                "dimples": dimple_trace
             }
             return jsonify({'success': True, 'report': report})
         else:
-            return jsonify({'success': False, 'error': "No face detected. Please ensure good lighting."})
+            return jsonify({'success': False, 'error': "No face detected."})
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
