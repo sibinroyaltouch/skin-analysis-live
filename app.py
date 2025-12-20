@@ -16,15 +16,17 @@ def home():
 @app.route('/analyze', methods=['POST'])
 def analyze_skin():
     try:
+        # 1. Receive image data
         data = request.json
         image_data = data['image']
         
+        # Remove base64 header
         if ',' in image_data:
             clean_image = image_data.split(',')[1]
         else:
             clean_image = image_data
 
-        # Request Emotion and Skin Status
+        # 2. Call Face++ API
         payload = {
             'api_key': API_KEY,
             'api_secret': API_SECRET,
@@ -35,36 +37,31 @@ def analyze_skin():
         response = requests.post(API_URL, data=payload)
         result = response.json()
 
+        # 3. Process Result
         if 'faces' in result and len(result['faces']) > 0:
             face = result['faces'][0]['attributes']
             skin = face['skinstatus']
             emotions = face['emotion']
             
-            # 1. CALCULATE SLEEP TRACES
-            # Combination of Dark Circles + Eye Status (Closing)
+            # --- CALCULATE LIFESTYLE METRICS ---
+            
+            # 1. Sleep/Fatigue (Eyes + Dark Circles)
             left_eye_close = face['eyestatus']['left_eye_status']['no_glass_eye_close']
             right_eye_close = face['eyestatus']['right_eye_status']['no_glass_eye_close']
             avg_eye_closure = (left_eye_close + right_eye_close) / 2
-            
-            # Sleep Debt Score (0-100). Higher = More Sleep Deprived
-            sleep_trace = (skin['dark_circle'] + avg_eye_closure) / 2
+            # Weighted score: 60% Dark Circles, 40% Droopy Eyes
+            fatigue_score = (skin['dark_circle'] * 0.6) + (avg_eye_closure * 0.4)
 
-            # 2. CALCULATE STRESS TRACES
-            # Combination of Negative Emotions + Skin Health Drop
-            # (Sadness + Fear + Anger) blended with (100 - Skin Health)
+            # 2. Stress (Skin Health + Negative Emotion)
             neg_emotion = emotions['sadness'] + emotions['fear'] + emotions['anger']
-            health_inv = 100 - skin['health']
-            stress_trace = (neg_emotion + health_inv) / 2
+            health_drop = 100 - skin['health']
+            stress_score = (neg_emotion + health_drop) / 2
 
-            # 3. MOLE / SPOT INTENSITY
-            # 'Stain' usually picks up moles and dark spots
-            mole_trace = skin['stain']
+            # 3. Moles (Stain contrast)
+            mole_score = skin['stain']
 
-            # 4. DIMPLE DETECTION (Heuristic based on Smile + Beauty)
-            # Real dimple detection needs depth sensors, but we can estimate probability
-            # based on smile depth and cheek contours.
-            is_smiling = face['smile']['value'] > 40
-            dimple_trace = "Possible" if (is_smiling and face['beauty']['female_score'] > 60) else "Not Detected"
+            # 4. Dimples (Smile + Beauty correlation)
+            has_dimples = "Detected" if (face['smile']['value'] > 50 and face['beauty']['female_score'] > 65) else "Not Detected"
 
             report = {
                 "health": skin['health'],
@@ -73,14 +70,16 @@ def analyze_skin():
                 "stain": skin['stain'],
                 "age": face['age']['value'],
                 "gender": face['gender']['value'],
-                "fatigue": round(sleep_trace, 1), # Renamed logic
-                "stress": round(stress_trace, 1),
-                "mole_intensity": mole_trace,
-                "dimples": dimple_trace
+                "beauty": face['beauty']['female_score'] if face['gender']['value'] == 'Female' else face['beauty']['male_score'],
+                # Derived Metrics
+                "fatigue": round(fatigue_score, 1),
+                "stress": round(stress_score, 1),
+                "moles": round(mole_score, 1),
+                "dimples": has_dimples
             }
             return jsonify({'success': True, 'report': report})
         else:
-            return jsonify({'success': False, 'error': "No face detected."})
+            return jsonify({'success': False, 'error': "No face detected. Please ensure good lighting and face the camera directly."})
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
