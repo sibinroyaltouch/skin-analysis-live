@@ -43,25 +43,15 @@ def analyze_skin():
             skin = face['skinstatus']
             emotions = face['emotion']
             
-            # --- CALCULATE LIFESTYLE METRICS ---
+            # Derived Metrics
+            left_eye = face['eyestatus']['left_eye_status']['no_glass_eye_close']
+            right_eye = face['eyestatus']['right_eye_status']['no_glass_eye_close']
+            fatigue_score = (skin['dark_circle'] * 0.6) + ((left_eye + right_eye)/2 * 0.4)
             
-            # 1. Sleep/Fatigue (Eyes + Dark Circles)
-            left_eye_close = face['eyestatus']['left_eye_status']['no_glass_eye_close']
-            right_eye_close = face['eyestatus']['right_eye_status']['no_glass_eye_close']
-            avg_eye_closure = (left_eye_close + right_eye_close) / 2
-            # Weighted score: 60% Dark Circles, 40% Droopy Eyes
-            fatigue_score = (skin['dark_circle'] * 0.6) + (avg_eye_closure * 0.4)
-
-            # 2. Stress (Skin Health + Negative Emotion)
             neg_emotion = emotions['sadness'] + emotions['fear'] + emotions['anger']
-            health_drop = 100 - skin['health']
-            stress_score = (neg_emotion + health_drop) / 2
-
-            # 3. Moles (Stain contrast)
-            mole_score = skin['stain']
-
-            # 4. Dimples (Smile + Beauty correlation)
-            has_dimples = "Detected" if (face['smile']['value'] > 50 and face['beauty']['female_score'] > 65) else "Not Detected"
+            stress_score = (neg_emotion + (100 - skin['health'])) / 2
+            
+            dimples = "Likely" if (face['smile']['value'] > 40) else "Not Detected"
 
             report = {
                 "health": skin['health'],
@@ -71,15 +61,16 @@ def analyze_skin():
                 "age": face['age']['value'],
                 "gender": face['gender']['value'],
                 "beauty": face['beauty']['female_score'] if face['gender']['value'] == 'Female' else face['beauty']['male_score'],
-                # Derived Metrics
                 "fatigue": round(fatigue_score, 1),
                 "stress": round(stress_score, 1),
-                "moles": round(mole_score, 1),
-                "dimples": has_dimples
+                "moles": round(skin['stain'], 1),
+                "dimples": dimples
             }
             return jsonify({'success': True, 'report': report})
         else:
-            return jsonify({'success': False, 'error': "No face detected. Please ensure good lighting and face the camera directly."})
+            # Debugging: Print error to terminal if needed
+            print("Face++ Error or No Face:", result)
+            return jsonify({'success': False, 'error': "No face detected. Please hold the camera steady and ensure good lighting."})
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
