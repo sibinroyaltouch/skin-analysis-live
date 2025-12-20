@@ -2,10 +2,9 @@
 <html>
 <head>
     <title>Aestodent 3D Analysis System</title>
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- GOOGLE MEDIAPIPE (3D FACE MESH) -->
+    <!-- GOOGLE MEDIAPIPE -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
@@ -19,9 +18,7 @@
         
         .screen-container { background: white; max-width: 900px; margin: 0 auto; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
 
-        /* CAMERA */
         .camera-wrapper { position: relative; width: 100%; max-width: 500px; margin: 0 auto 20px auto; border-radius: 10px; overflow: hidden; background: black; min-height: 360px; }
-        #permission-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; color: white; }
         .input_video { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; }
         .output_canvas { width: 100%; height: auto; display: block; border-radius: 10px;}
 
@@ -30,7 +27,6 @@
         .btn-start { background: var(--accent); color: #000; padding: 15px 30px; border:none; border-radius: 50px; font-weight: bold; cursor: pointer; }
         #loader { font-weight: bold; color: var(--primary); margin-bottom: 10px; display: none; }
 
-        /* HEADER */
         .header { display: flex; justify-content: space-between; border-bottom: 3px solid var(--primary); padding-bottom: 15px; margin-bottom: 20px; }
         .header img { width: 160px; }
         .header h1 { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--primary); margin: 0; }
@@ -39,7 +35,6 @@
         .patient-details { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; text-align: left; margin-bottom: 20px; }
         .input-group input, .input-group select { width: 100%; padding: 5px 0; border: none; border-bottom: 1px solid #ccc; font-weight: bold; }
 
-        /* GALLERY (8-Grid) */
         .gallery-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .gallery-item { position: relative; border: 1px solid #eee; padding: 3px; background: #fff; }
         .gallery-item img { width: 100%; height: 120px; object-fit: cover; }
@@ -55,8 +50,6 @@
         .filter-glow { filter: invert(100%) sepia(100%) hue-rotate(80deg) brightness(1.1) contrast(1.5) blur(0.5px); }
 
         .section-title { border-bottom: 2px solid var(--primary); color: var(--primary); text-align: left; font-family: 'Playfair Display', serif; font-size: 18px; margin: 20px 0 10px 0; }
-        
-        /* DATA & BARS */
         .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left; }
         .metric-row { margin-bottom: 10px; }
         .metric-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; }
@@ -65,17 +58,16 @@
         .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; color: white; font-weight: bold; }
         .badge-mild { background: #28a745; } .badge-mod { background: #ffc107; color: #333; } .badge-sev { background: #dc3545; }
 
-        /* PROFESSIONAL THERMAL MAP */
+        /* WIREFRAME MAP CONTAINER */
         .scan-container {
             position: relative; width: 100%; max-width: 600px; margin: 0 auto 30px auto;
-            border: 1px solid #333; border-radius: 8px; overflow: hidden; background: #000;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 2px solid #333; border-radius: 8px; overflow: hidden; background: #000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        #defect-canvas { width: 100%; height: auto; display: block; }
+        #defect-canvas { width: 100%; height: auto; display: block; background: black; }
         .scan-legend { display: flex; justify-content: center; gap: 20px; background: #111; padding: 12px; border-top: 1px solid #333; }
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #eee; font-family: 'Roboto', sans-serif; }
         .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-        /* THERMAL GLOW COLORS */
         .dot-acne { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
         .dot-pigment { background: #ffd700; box-shadow: 0 0 10px #ffd700; }
         .dot-circles { background: #00ffff; box-shadow: 0 0 10px #00ffff; }
@@ -83,7 +75,6 @@
         .chart-box { height: 200px; width: 100%; }
         .ai-summary-box { background: #eefbfb; border: 1px solid #b2d8d8; padding: 15px; text-align: left; margin-bottom: 20px; border-radius: 5px; font-size: 13px; line-height: 1.6; }
         .rec-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left; }
-        
         .footer-info { font-size: 10px; color: #777; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 15px; display: flex; justify-content: space-between; text-align: left; }
         .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); opacity: 0.03; width: 70%; pointer-events: none; z-index: 0; }
 
@@ -110,22 +101,20 @@
             </div>
         </div>
 
-        <div id="loader">Processing...</div>
+        <div id="loader">Initializing 3D Engine... Allow Camera Access.</div>
 
         <div class="camera-wrapper">
-            <!-- PERMISSION BUTTON -->
             <div id="permission-overlay">
                 <p style="margin-bottom:20px; color:#ccc;">Camera access required for 3D Mesh Engine.</p>
                 <button class="btn-start" onclick="enableCamera()">Start Camera</button>
             </div>
-
             <video class="input_video" autoplay playsinline></video>
             <canvas class="output_canvas" width="480px" height="360px"></canvas>
         </div>
 
         <div class="btn-group">
-            <button id="capBtn" class="btn-analyze" onclick="captureAndAnalyze()" style="display:none;"> Capture 3D Scan</button>
-            <button class="btn-print" id="printBtn" onclick="window.print()"> Print Report</button>
+            <button id="capBtn" class="btn-analyze" onclick="captureAndAnalyze()" style="display:none;">📸 Capture 3D Scan</button>
+            <button class="btn-print" id="printBtn" onclick="window.print()">🖨️ Print Report</button>
         </div>
     </div>
 
@@ -161,7 +150,7 @@
                 <div class="gallery-item"><img id="img-glow" class="filter-glow" src=""><p>Porphyrins</p></div>
             </div>
 
-            <h3 class="section-title"> Biometric Balance</h3>
+            <h3 class="section-title">📊 Biometric Balance</h3>
             <div class="chart-box" style="height:200px"><canvas id="radarChart"></canvas></div>
         </div>
 
@@ -173,15 +162,13 @@
             </div>
             <hr style="border:0; border-top:1px solid #ddd; margin-bottom:20px;">
 
-            <h3 class="section-title"> Detailed Clinical Metrics</h3>
+            <h3 class="section-title">📝 Detailed Clinical Metrics</h3>
             <div class="data-grid">
-                <!-- COL 1 -->
                 <div>
                     <div class="metric-row"><div class="metric-header"><span>Health Score</span><span id="health-val">--</span></div><div class="progress-bg"><div id="health-bar" class="progress-fill" style="width:0; background:#28a745;"></div></div></div>
                     <div class="metric-row"><div class="metric-header"><span>Acne Probability</span><span id="acne-val">--</span></div><div class="progress-bg"><div id="acne-bar" class="progress-fill" style="width:0; background:#dc3545;"></div></div></div>
                     <div class="metric-row"><div class="metric-header"><span>Biological Age</span><span id="age-val">--</span></div><div style="font-size:10px; color:#666; font-style:italic;">Based on surface texture</div></div>
                 </div>
-                <!-- COL 2 -->
                 <div>
                     <div class="metric-row"><div class="metric-header"><span>Pigmentation</span><span id="stain-val">--</span></div><div class="progress-bg"><div id="stain-bar" class="progress-fill" style="width:0; background:#ffc107;"></div></div></div>
                     <div class="metric-row"><div class="metric-header"><span>Dark Circles</span><span id="circles-val">--</span></div><div class="progress-bg"><div id="circles-bar" class="progress-fill" style="width:0; background:#17a2b8;"></div></div></div>
@@ -189,8 +176,8 @@
                 </div>
             </div>
 
-            <!-- THERMAL DEFECT MAPPING -->
-            <h3 class="section-title"> Thermal Defect Mapping</h3>
+            <!-- COMPOSITE DEFECT MAPPING (WIREFRAME ON BLACK) -->
+            <h3 class="section-title">📍 Composite Defect Mapping</h3>
             <div class="scan-container">
                 <canvas id="defect-canvas"></canvas>
                 <div class="scan-legend">
@@ -219,14 +206,12 @@
                 </div>
             </div>
 
-            <!-- SMART RECS -->
             <div id="ai-recommendations" class="rec-box" style="display:none;">
                 <div style="font-weight: bold; color: #856404; margin-bottom: 5px;">✨ AI Suggested Regimen</div>
                 <ul id="rec-list" style="list-style: none; padding: 0; margin: 0;"></ul>
             </div>
 
-            <!-- RX TABLE -->
-            <h3 class="section-title"> Prescription (Rx)</h3>
+            <h3 class="section-title">💊 Prescription (Rx)</h3>
             <table class="rx-table" style="width:100%; border-collapse:collapse; text-align:left; font-size:12px; margin-bottom:10px;">
                 <tr style="background:#004d40; color:white;"><th>Medicine</th><th>Dosage</th><th>Freq</th></tr>
                 <tr><td><input type="text" style="width:100%"></td><td><input type="text"></td><td><input type="text"></td></tr>
@@ -249,9 +234,9 @@
         const canvasElement = document.getElementsByClassName('output_canvas')[0];
         const canvasCtx = canvasElement.getContext('2d');
         const loader = document.getElementById('loader');
-        
         let radarChartInstance = null;
         let capturedImageOriginal = null;
+        let capturedImageMesh = null;
         let currentLandmarks = null;
         let camera = null;
 
@@ -263,17 +248,12 @@
             EYE_RIGHT_BAG: [33, 7, 163, 144, 145, 153, 154, 155, 133, 246, 161, 160, 159, 158, 157, 173]
         };
 
-        // --- PERMISSION ---
         function enableCamera() {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(stream => {
-                    document.getElementById('permission-overlay').style.display = 'none';
-                    loader.style.display = 'block';
-                    startCamera(stream);
-                })
-                .catch(err => {
-                    alert("Camera blocked. Please allow camera access in browser settings.");
-                });
+            navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+                document.getElementById('permission-overlay').style.display = 'none';
+                loader.style.display = 'block';
+                startCamera(stream);
+            }).catch(err => { alert("Camera blocked."); });
         }
 
         function startCamera(stream) {
@@ -284,19 +264,17 @@
             camera.start();
         }
 
-        // --- 3D SETUP ---
         function onResults(results) {
             loader.style.display = "none";
             document.getElementById('capBtn').style.display = "inline-block";
-            
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
-            
             if (results.multiFaceLandmarks) {
                 currentLandmarks = results.multiFaceLandmarks[0];
                 for (const landmarks of results.multiFaceLandmarks) {
                     drawConnectors(canvasCtx, landmarks, FACEMESH_TESSELATION, {color: '#00e5ff11', lineWidth: 1});
+                    drawConnectors(canvasCtx, landmarks, FACEMESH_FACE_OVAL, {color: '#00e5ff', lineWidth: 2});
                 }
             }
             canvasCtx.restore();
@@ -308,29 +286,33 @@
 
         // --- CAPTURE ---
         function captureAndAnalyze() {
-            const meshImage = canvasElement.toDataURL('image/jpeg');
-            document.getElementById('img-mesh').src = meshImage;
+            // 1. Capture pure Wireframe for Report
+            // Temporarily clear canvas to black
+            canvasCtx.fillStyle = "black";
+            canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
+            if(currentLandmarks) {
+                drawConnectors(canvasCtx, currentLandmarks, FACEMESH_TESSELATION, {color: '#00e5ff33', lineWidth: 1});
+                drawConnectors(canvasCtx, currentLandmarks, FACEMESH_FACE_OVAL, {color: '#00e5ff', lineWidth: 2});
+            }
+            capturedImageMesh = canvasElement.toDataURL('image/jpeg');
+            document.getElementById('img-mesh').src = capturedImageMesh;
 
+            // 2. Capture Raw Image for AI
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = videoElement.videoWidth; tempCanvas.height = videoElement.videoHeight;
             tempCanvas.getContext('2d').drawImage(videoElement, 0, 0);
             capturedImageOriginal = tempCanvas.toDataURL('image/jpeg');
 
-            const ids = ['img-normal','img-bw','img-uv','img-brown','img-red','img-thermal','img-glow'];
-            ids.forEach(id => document.getElementById(id).src = capturedImageOriginal);
+            ['img-normal','img-bw','img-uv','img-brown','img-red','img-thermal','img-glow'].forEach(id => document.getElementById(id).src = capturedImageOriginal);
 
-            alert("3D Scan Captured. Analyzing Skin...");
+            alert("3D Scan Captured. Analyzing...");
 
             fetch('/analyze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ image: capturedImageOriginal })
-            })
-            .then(response => response.json())
-            .then(data => {
+            }).then(response => response.json()).then(data => {
                 if(data.success) {
                     const r = data.report;
-                    
                     document.getElementById('health-val').innerText = r.health + "%";
                     document.getElementById('acne-val').innerText = r.acne + "%";
                     document.getElementById('circles-val').innerText = r.circles + "%";
@@ -344,13 +326,13 @@
                     setBar('circles-bar', r.circles, false);
                     setBar('fatigue-bar', r.fatigue, false);
 
-                    document.getElementById('ai-narrative').innerHTML = `Skin Health Index: <strong>${r.health}%</strong>. Barrier integrity is ${r.health > 70 ? 'intact' : 'compromised'}. Est. Age: ${r.age}.`;
-
-                    document.getElementById('grade-acne').innerText = r.acne < 30 ? "Grade I" : (r.acne < 60 ? "Grade II" : "Grade III");
+                    document.getElementById('ai-narrative').innerHTML = `Skin Health Index: <strong>${r.health}%</strong>. Barrier integrity is ${r.health > 70 ? 'intact' : 'compromised'}.`;
+                    document.getElementById('grade-acne').innerText = r.acne < 30 ? "Grade I" : "Grade III";
                     document.getElementById('grade-stain').innerText = r.stain < 30 ? "Minimal" : "Visible";
                     document.getElementById('grade-barrier').innerText = r.health > 70 ? "Intact" : "Impaired";
 
-                    generateProfessionalMap(r);
+                    // GENERATE WIREFRAME MAP
+                    generateWireframeMap(r);
                     generateRecommendations(r);
                     
                     if (radarChartInstance) radarChartInstance.destroy();
@@ -366,35 +348,33 @@
             }).catch(err => alert("Server Error: " + err));
         }
 
-        // --- 4. THERMAL MAP GENERATOR ---
-        function generateProfessionalMap(r) {
-            if (!currentLandmarks || !capturedImageOriginal) return;
+        // --- MAP GENERATOR (WIREFRAME ON BLACK) ---
+        function generateWireframeMap(r) {
+            if (!currentLandmarks) return;
             const canvas = document.getElementById('defect-canvas');
             const ctx = canvas.getContext('2d');
+            
+            // 1. Use the captured MESH image (Black BG + Green Lines) as base
             const img = new Image();
-            img.src = capturedImageOriginal;
+            img.src = capturedImageMesh;
             img.onload = () => {
                 canvas.width = img.width; canvas.height = img.height;
-                
-                // THERMAL BASE LOOK (Blue/Orange)
-                ctx.filter = 'contrast(150%) saturate(200%) invert(100%) hue-rotate(180deg)';
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                ctx.filter = 'none';
 
-                ctx.globalCompositeOperation = 'screen'; // Glowing overlay mode
+                ctx.globalCompositeOperation = 'source-over'; 
 
-                if (r.acne > 40) drawBlurredZone(ctx, currentLandmarks, ZONES.TZONE, 'rgba(255, 0, 0, 0.6)', 30);
+                // 2. Draw GLOWING Defect Zones on top of wireframe
+                if (r.acne > 40) drawBlurredZone(ctx, currentLandmarks, ZONES.TZONE, 'rgba(255, 0, 0, 0.7)', 20);
                 
                 if (r.circles > 50) {
-                    drawBlurredZone(ctx, currentLandmarks, ZONES.EYE_LEFT_BAG, 'rgba(0, 255, 255, 0.6)', 20);
-                    drawBlurredZone(ctx, currentLandmarks, ZONES.EYE_RIGHT_BAG, 'rgba(0, 255, 255, 0.6)', 20);
+                    drawBlurredZone(ctx, currentLandmarks, ZONES.EYE_LEFT_BAG, 'rgba(0, 255, 255, 0.7)', 15);
+                    drawBlurredZone(ctx, currentLandmarks, ZONES.EYE_RIGHT_BAG, 'rgba(0, 255, 255, 0.7)', 15);
                 }
                 
                 if (r.stain > 50) {
-                    drawBlurredZone(ctx, currentLandmarks, ZONES.CHEEK_LEFT, 'rgba(255, 215, 0, 0.5)', 25);
-                    drawBlurredZone(ctx, currentLandmarks, ZONES.CHEEK_RIGHT, 'rgba(255, 215, 0, 0.5)', 25);
+                    drawBlurredZone(ctx, currentLandmarks, ZONES.CHEEK_LEFT, 'rgba(255, 215, 0, 0.6)', 25);
+                    drawBlurredZone(ctx, currentLandmarks, ZONES.CHEEK_RIGHT, 'rgba(255, 215, 0, 0.6)', 25);
                 }
-                ctx.globalCompositeOperation = 'source-over';
             };
         }
 
@@ -415,7 +395,6 @@
             ctx.restore();
         }
 
-        // 5. RECS & HELPERS
         function generateRecommendations(r) {
             const list = document.getElementById('rec-list');
             const box = document.getElementById('ai-recommendations');
