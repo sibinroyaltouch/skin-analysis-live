@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Aestodent 3D Analysis System</title>
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- GOOGLE MEDIAPIPE -->
@@ -35,6 +36,7 @@
         .patient-details { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; text-align: left; margin-bottom: 20px; }
         .input-group input, .input-group select { width: 100%; padding: 5px 0; border: none; border-bottom: 1px solid #ccc; font-weight: bold; }
 
+        /* GALLERY (8-Grid) */
         .gallery-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         .gallery-item { position: relative; border: 1px solid #eee; padding: 3px; background: #fff; }
         .gallery-item img { width: 100%; height: 120px; object-fit: cover; }
@@ -50,6 +52,7 @@
         .filter-glow { filter: invert(100%) sepia(100%) hue-rotate(80deg) brightness(1.1) contrast(1.5) blur(0.5px); }
 
         .section-title { border-bottom: 2px solid var(--primary); color: var(--primary); text-align: left; font-family: 'Playfair Display', serif; font-size: 18px; margin: 20px 0 10px 0; }
+        
         .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left; }
         .metric-row { margin-bottom: 10px; }
         .metric-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; }
@@ -58,7 +61,7 @@
         .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; color: white; font-weight: bold; }
         .badge-mild { background: #28a745; } .badge-mod { background: #ffc107; color: #333; } .badge-sev { background: #dc3545; }
 
-        /* WIREFRAME MAP CONTAINER */
+        /* WIREFRAME MAP */
         .scan-container {
             position: relative; width: 100%; max-width: 600px; margin: 0 auto 30px auto;
             border: 2px solid #333; border-radius: 8px; overflow: hidden; background: #000;
@@ -68,13 +71,16 @@
         .scan-legend { display: flex; justify-content: center; gap: 20px; background: #111; padding: 12px; border-top: 1px solid #333; }
         .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #eee; font-family: 'Roboto', sans-serif; }
         .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-        .dot-acne { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
-        .dot-pigment { background: #ffd700; box-shadow: 0 0 10px #ffd700; }
+        
+        /* NEW COLORS */
+        .dot-stress { background: #ff00ff; box-shadow: 0 0 10px #ff00ff; }
+        .dot-moles { background: #ffa500; box-shadow: 0 0 10px #ffa500; }
         .dot-circles { background: #00ffff; box-shadow: 0 0 10px #00ffff; }
 
         .chart-box { height: 200px; width: 100%; }
         .ai-summary-box { background: #eefbfb; border: 1px solid #b2d8d8; padding: 15px; text-align: left; margin-bottom: 20px; border-radius: 5px; font-size: 13px; line-height: 1.6; }
         .rec-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left; }
+        
         .footer-info { font-size: 10px; color: #777; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 15px; display: flex; justify-content: space-between; text-align: left; }
         .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); opacity: 0.03; width: 70%; pointer-events: none; z-index: 0; }
 
@@ -162,17 +168,30 @@
             </div>
             <hr style="border:0; border-top:1px solid #ddd; margin-bottom:20px;">
 
-            <h3 class="section-title">📝 Detailed Clinical Metrics</h3>
+            <!-- NEW: LIFESTYLE & FEATURES SECTION -->
+            <h3 class="section-title">🧬 Lifestyle & Features Analysis</h3>
+            <div class="data-grid">
+                <!-- Row 1 -->
+                <div>
+                    <div class="metric-row"><div class="metric-header"><span>Sleep Deprivation</span><span id="sleep-val">--</span></div><div class="progress-bg"><div id="sleep-bar" class="progress-fill" style="width:0; background:#6c757d;"></div></div></div>
+                    <div class="metric-row"><div class="metric-header"><span>Stress Level</span><span id="stress-val">--</span></div><div class="progress-bg"><div id="stress-bar" class="progress-fill" style="width:0; background:#dc3545;"></div></div></div>
+                </div>
+                <!-- Row 2 -->
+                <div>
+                    <div class="metric-row"><div class="metric-header"><span>Moles / Spots</span><span id="mole-val">--</span></div><div class="progress-bg"><div id="mole-bar" class="progress-fill" style="width:0; background:#ffa500;"></div></div></div>
+                    <div class="metric-row"><div class="metric-header"><span>Cheek Dimples</span><span id="dimple-val">--</span></div><div style="font-size:11px; color:#555; margin-top:5px; font-style:italic;">Based on topographic geometry</div></div>
+                </div>
+            </div>
+
+            <h3 class="section-title">📝 Clinical Metrics</h3>
             <div class="data-grid">
                 <div>
                     <div class="metric-row"><div class="metric-header"><span>Health Score</span><span id="health-val">--</span></div><div class="progress-bg"><div id="health-bar" class="progress-fill" style="width:0; background:#28a745;"></div></div></div>
                     <div class="metric-row"><div class="metric-header"><span>Acne Probability</span><span id="acne-val">--</span></div><div class="progress-bg"><div id="acne-bar" class="progress-fill" style="width:0; background:#dc3545;"></div></div></div>
-                    <div class="metric-row"><div class="metric-header"><span>Biological Age</span><span id="age-val">--</span></div><div style="font-size:10px; color:#666; font-style:italic;">Based on surface texture</div></div>
                 </div>
                 <div>
-                    <div class="metric-row"><div class="metric-header"><span>Pigmentation</span><span id="stain-val">--</span></div><div class="progress-bg"><div id="stain-bar" class="progress-fill" style="width:0; background:#ffc107;"></div></div></div>
                     <div class="metric-row"><div class="metric-header"><span>Dark Circles</span><span id="circles-val">--</span></div><div class="progress-bg"><div id="circles-bar" class="progress-fill" style="width:0; background:#17a2b8;"></div></div></div>
-                    <div class="metric-row"><div class="metric-header"><span>Eye Fatigue</span><span id="fatigue-val">--</span></div><div class="progress-bg"><div id="fatigue-bar" class="progress-fill" style="width:0; background:#6c757d;"></div></div></div>
+                    <div class="metric-row"><div class="metric-header"><span>Biological Age</span><span id="age-val">--</span></div></div>
                 </div>
             </div>
 
@@ -181,9 +200,9 @@
             <div class="scan-container">
                 <canvas id="defect-canvas"></canvas>
                 <div class="scan-legend">
-                    <div class="legend-item"><span class="dot dot-acne"></span> Inflammation</div>
-                    <div class="legend-item"><span class="dot dot-pigment"></span> Pigmentation</div>
-                    <div class="legend-item"><span class="dot dot-circles"></span> Dark Circles</div>
+                    <div class="legend-item"><span class="dot dot-circles"></span> Sleep/Eyes</div>
+                    <div class="legend-item"><span class="dot dot-stress"></span> Stress Zones</div>
+                    <div class="legend-item"><span class="dot dot-moles"></span> Moles/Spots</div>
                 </div>
             </div>
 
@@ -194,14 +213,6 @@
                         <label><input type="radio" name="fitz" value="1"> Type I</label> <label><input type="radio" name="fitz" value="2"> Type II</label>
                         <label><input type="radio" name="fitz" value="3"> Type III</label> <label><input type="radio" name="fitz" value="4"> Type IV</label>
                         <label><input type="radio" name="fitz" value="5"> Type V</label> <label><input type="radio" name="fitz" value="6"> Type VI</label>
-                    </div>
-                </div>
-                <div style="flex:1;">
-                    <h3 class="section-title" style="margin-top:0; font-size:14px;">📐 Clinical Grading</h3>
-                    <div style="font-size:12px;">
-                        <div><strong>Acne:</strong> <span id="grade-acne" class="badge badge-mild">--</span></div>
-                        <div><strong>Pigment:</strong> <span id="grade-stain" class="badge badge-mod">--</span></div>
-                        <div><strong>Barrier:</strong> <span id="grade-barrier" class="badge badge-sev">--</span></div>
                     </div>
                 </div>
             </div>
@@ -286,8 +297,7 @@
 
         // --- CAPTURE ---
         function captureAndAnalyze() {
-            // 1. Capture pure Wireframe for Report
-            // Temporarily clear canvas to black
+            // 1. Wireframe Capture
             canvasCtx.fillStyle = "black";
             canvasCtx.fillRect(0, 0, canvasElement.width, canvasElement.height);
             if(currentLandmarks) {
@@ -297,13 +307,14 @@
             capturedImageMesh = canvasElement.toDataURL('image/jpeg');
             document.getElementById('img-mesh').src = capturedImageMesh;
 
-            // 2. Capture Raw Image for AI
+            // 2. Raw Capture
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = videoElement.videoWidth; tempCanvas.height = videoElement.videoHeight;
             tempCanvas.getContext('2d').drawImage(videoElement, 0, 0);
             capturedImageOriginal = tempCanvas.toDataURL('image/jpeg');
 
-            ['img-normal','img-bw','img-uv','img-brown','img-red','img-thermal','img-glow'].forEach(id => document.getElementById(id).src = capturedImageOriginal);
+            const ids = ['img-normal','img-bw','img-uv','img-brown','img-red','img-thermal','img-glow'];
+            ids.forEach(id => document.getElementById(id).src = capturedImageOriginal);
 
             alert("3D Scan Captured. Analyzing...");
 
@@ -313,25 +324,30 @@
             }).then(response => response.json()).then(data => {
                 if(data.success) {
                     const r = data.report;
+                    
                     document.getElementById('health-val').innerText = r.health + "%";
                     document.getElementById('acne-val').innerText = r.acne + "%";
                     document.getElementById('circles-val').innerText = r.circles + "%";
                     document.getElementById('stain-val').innerText = r.stain + "%";
-                    document.getElementById('fatigue-val').innerText = r.fatigue + "%";
                     document.getElementById('age-val').innerText = r.age + " Yrs";
+                    
+                    // NEW METRICS
+                    document.getElementById('sleep-val').innerText = r.fatigue + "%"; // Using the new fatigue calculation
+                    document.getElementById('stress-val').innerText = r.stress + "%";
+                    document.getElementById('mole-val').innerText = r.mole_intensity + "%";
+                    document.getElementById('dimple-val').innerText = r.dimples;
 
                     setBar('health-bar', r.health, true);
                     setBar('acne-bar', r.acne, false);
                     setBar('stain-bar', r.stain, false);
                     setBar('circles-bar', r.circles, false);
-                    setBar('fatigue-bar', r.fatigue, false);
+                    
+                    setBar('sleep-bar', r.fatigue, false);
+                    setBar('stress-bar', r.stress, false);
+                    setBar('mole-bar', r.mole_intensity, false);
 
-                    document.getElementById('ai-narrative').innerHTML = `Skin Health Index: <strong>${r.health}%</strong>. Barrier integrity is ${r.health > 70 ? 'intact' : 'compromised'}.`;
-                    document.getElementById('grade-acne').innerText = r.acne < 30 ? "Grade I" : "Grade III";
-                    document.getElementById('grade-stain').innerText = r.stain < 30 ? "Minimal" : "Visible";
-                    document.getElementById('grade-barrier').innerText = r.health > 70 ? "Intact" : "Impaired";
+                    document.getElementById('ai-narrative').innerHTML = `Skin Health Index: <strong>${r.health}%</strong>. Barrier integrity is ${r.health > 70 ? 'intact' : 'compromised'}. Stress Markers: ${r.stress}%.`;
 
-                    // GENERATE WIREFRAME MAP
                     generateWireframeMap(r);
                     generateRecommendations(r);
                     
@@ -348,13 +364,12 @@
             }).catch(err => alert("Server Error: " + err));
         }
 
-        // --- MAP GENERATOR (WIREFRAME ON BLACK) ---
+        // --- WIREFRAME MAP GENERATOR ---
         function generateWireframeMap(r) {
             if (!currentLandmarks) return;
             const canvas = document.getElementById('defect-canvas');
             const ctx = canvas.getContext('2d');
             
-            // 1. Use the captured MESH image (Black BG + Green Lines) as base
             const img = new Image();
             img.src = capturedImageMesh;
             img.onload = () => {
@@ -363,17 +378,21 @@
 
                 ctx.globalCompositeOperation = 'source-over'; 
 
-                // 2. Draw GLOWING Defect Zones on top of wireframe
-                if (r.acne > 40) drawBlurredZone(ctx, currentLandmarks, ZONES.TZONE, 'rgba(255, 0, 0, 0.7)', 20);
-                
-                if (r.circles > 50) {
+                // LACK OF SLEEP (Dark Circles -> Cyan)
+                if (r.fatigue > 50) {
                     drawBlurredZone(ctx, currentLandmarks, ZONES.EYE_LEFT_BAG, 'rgba(0, 255, 255, 0.7)', 15);
                     drawBlurredZone(ctx, currentLandmarks, ZONES.EYE_RIGHT_BAG, 'rgba(0, 255, 255, 0.7)', 15);
                 }
                 
-                if (r.stain > 50) {
-                    drawBlurredZone(ctx, currentLandmarks, ZONES.CHEEK_LEFT, 'rgba(255, 215, 0, 0.6)', 25);
-                    drawBlurredZone(ctx, currentLandmarks, ZONES.CHEEK_RIGHT, 'rgba(255, 215, 0, 0.6)', 25);
+                // STRESS (T-Zone Tension -> Magenta)
+                if (r.stress > 40) {
+                    drawBlurredZone(ctx, currentLandmarks, ZONES.TZONE, 'rgba(255, 0, 255, 0.6)', 20);
+                }
+                
+                // MOLES / PIGMENT (Cheeks -> Orange)
+                if (r.mole_intensity > 40) {
+                    drawBlurredZone(ctx, currentLandmarks, ZONES.CHEEK_LEFT, 'rgba(255, 165, 0, 0.6)', 25);
+                    drawBlurredZone(ctx, currentLandmarks, ZONES.CHEEK_RIGHT, 'rgba(255, 165, 0, 0.6)', 25);
                 }
             };
         }
