@@ -1,42 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Aestodent 3D Analysis</title>
+    <title>Aestodent 3D Analysis System</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 
     <style>
         :root { --primary: #004d40; --accent: #00e5ff; --bg: #f4f6f8; }
         body { font-family: 'Roboto', sans-serif; background: var(--bg); text-align: center; color: #333; margin: 0; padding: 20px;}
         .screen-container { background: white; max-width: 900px; margin: 0 auto; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-
         .camera-wrapper { position: relative; width: 100%; max-width: 500px; margin: 0 auto 20px auto; border-radius: 10px; overflow: hidden; background: black; min-height: 360px; }
-        #permission-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; color: white; }
-        
-        .input_video { display: none; } /* Hide raw video completely */
-        .output_canvas { width: 100%; height: auto; display: block; }
-
+        .input_video { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; }
+        .output_canvas { width: 100%; height: auto; display: block; border-radius: 10px;}
         .btn-analyze { background: linear-gradient(135deg, #007bff, #0056b3); color: white; padding: 12px 30px; border:none; border-radius: 50px; font-weight: bold; cursor: pointer; }
         .btn-print { background: linear-gradient(135deg, #28a745, #1e7e34); color: white; padding: 12px 30px; border:none; border-radius: 50px; font-weight: bold; cursor: pointer; display: none; }
         .btn-start { background: var(--accent); color: #000; padding: 15px 30px; border:none; border-radius: 50px; font-weight: bold; cursor: pointer; }
-        #loader { font-weight: bold; color: var(--primary); display: none; margin-bottom: 10px; }
-
-        /* REPORT STYLES */
+        #loader { font-weight: bold; color: var(--primary); margin-bottom: 10px; display: none; }
         .header { display: flex; justify-content: space-between; border-bottom: 3px solid var(--primary); padding-bottom: 15px; margin-bottom: 20px; }
         .header img { width: 160px; }
         .header h1 { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--primary); margin: 0; }
+        .qr-code { width: 60px; height: 60px; background-image: url('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Aestodent3DScan'); background-size: cover; border: 1px solid #ddd; }
         .patient-details { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; text-align: left; margin-bottom: 20px; }
-        .input-group input, .input-group select { width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
-        
-        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
-        .gallery-item { border: 1px solid #eee; padding: 3px; background: #fff; }
-        .gallery-item img { width: 100%; height: 110px; object-fit: cover; }
-        .gallery-item p { font-size: 9px; font-weight: bold; margin: 4px 0 0 0; text-transform: uppercase; color: var(--primary); }
-
+        .input-group input, .input-group select { width: 100%; padding: 5px 0; border: none; border-bottom: 1px solid #ccc; font-weight: bold; }
+        .gallery-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .gallery-item { position: relative; border: 1px solid #eee; padding: 3px; background: #fff; }
+        .gallery-item img { width: 100%; height: 120px; object-fit: cover; }
+        .gallery-item p { font-size: 9px; font-weight: bold; color: var(--primary); margin: 4px 0 0 0; text-transform: uppercase; }
         .filter-bw { filter: grayscale(100%) contrast(150%); }
         .filter-uv { filter: invert(100%) sepia(100%) hue-rotate(190deg) contrast(150%); }
         .filter-thermal { filter: invert(100%) hue-rotate(180deg) contrast(130%) saturate(200%); }
@@ -44,32 +37,45 @@
         .filter-red { filter: grayscale(100%) sepia(100%) hue-rotate(-50deg) saturate(400%); }
         .filter-polarized { filter: contrast(110%) saturate(140%); }
         .filter-glow { filter: invert(100%) sepia(100%) hue-rotate(80deg) brightness(1.1) contrast(1.5) blur(0.5px); }
-
+        .section-title { border-bottom: 2px solid var(--primary); color: var(--primary); text-align: left; font-family: 'Playfair Display', serif; font-size: 18px; margin: 20px 0 10px 0; }
         .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left; }
         .metric-row { margin-bottom: 10px; }
         .metric-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; }
         .progress-bg { width: 100%; height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 4px; }
-        
-        .scan-container { width: 100%; max-width: 600px; margin: 0 auto; background: #000; border: 1px solid #333; }
-        #defect-canvas { width: 100%; height: auto; display: block; }
-        .scan-legend { display: flex; justify-content: center; gap: 15px; background: #111; padding: 10px; color: #fff; font-size: 11px; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        .dot-acne { background: #ff0000; box-shadow: 0 0 10px #ff0000; }
-        .dot-pigment { background: #ffd700; box-shadow: 0 0 10px #ffd700; }
-        .dot-circles { background: #00ffff; box-shadow: 0 0 10px #00ffff; }
-
-        .section-title { border-bottom: 2px solid var(--primary); color: var(--primary); text-align: left; font-family: 'Playfair Display', serif; margin-top: 20px; }
-        .chart-box { height: 200px; width: 100%; }
         .badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; color: white; font-weight: bold; }
         .badge-mild { background: #28a745; } .badge-mod { background: #ffc107; color: #333; } .badge-sev { background: #dc3545; }
+        .scan-container { position: relative; width: 100%; max-width: 600px; margin: 0 auto 30px auto; border: 1px solid #333; border-radius: 8px; overflow: hidden; background: #000; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        #defect-canvas { width: 100%; height: auto; display: block; }
+        .scan-legend { display: flex; justify-content: center; gap: 20px; background: #111; padding: 12px; border-top: 1px solid #333; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #eee; font-family: 'Roboto', sans-serif; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .dot-acne { background: rgba(255, 50, 50, 1); box-shadow: 0 0 8px #ff3232; }
+        .dot-pigment { background: rgba(205, 133, 63, 1); box-shadow: 0 0 8px #cd853f; }
+        .dot-circles { background: rgba(100, 50, 255, 1); box-shadow: 0 0 8px #6432ff; }
+        .chart-box { height: 200px; width: 100%; }
+        .ai-summary-box { background: #eefbfb; border: 1px solid #b2d8d8; padding: 15px; text-align: left; margin-bottom: 20px; border-radius: 5px; font-size: 13px; line-height: 1.6; }
+        .rec-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left; }
+        
+        /* NEW LIFESTYLE BOX */
+        .lifestyle-box {
+            background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        }
+        .life-item { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; margin-bottom: 5px; font-size: 12px; }
+        .life-val { font-weight: bold; }
+        .val-bad { color: #dc3545; } .val-ok { color: #28a745; }
 
+        .footer-info { font-size: 10px; color: #777; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 15px; display: flex; justify-content: space-between; text-align: left; }
+        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); opacity: 0.03; width: 70%; pointer-events: none; z-index: 0; }
         #report-content { display: none; }
         @media print {
-            .screen-container { display: none !important; }
+            .screen-container, .camera-wrapper { display: none !important; }
             #report-content { display: block !important; }
             .print-page-1 { page-break-after: always; }
-            input, textarea { border: none !important; resize: none; }
+            .gallery-item img { height: 110px; }
+            input, select, textarea { border: none !important; }
+            .chart-box { border: none; height: 190px; }
         }
     </style>
 </head>
@@ -83,44 +89,41 @@
                 <p>AI-Powered Mesh Topology</p>
             </div>
         </div>
-
+        <div id="loader">Processing...</div>
         <div class="camera-wrapper">
             <div id="permission-overlay">
-                <p style="color:#ccc; margin-bottom:15px;">Camera access required.</p>
+                <p style="margin-bottom:20px; color:#ccc;">Camera access required for 3D Mesh Engine.</p>
                 <button class="btn-start" onclick="enableCamera()">Start Camera</button>
             </div>
-            <div id="loader">Processing AI Model...</div>
-            
-            <video class="input_video" autoplay playsinline muted></video>
+            <video class="input_video" autoplay playsinline></video>
             <canvas class="output_canvas" width="480px" height="360px"></canvas>
-            
-            <!-- HIDDEN CLEAN CANVAS (Buffer) -->
-            <canvas id="buffer_canvas" width="480px" height="360px" style="display:none;"></canvas>
         </div>
-
         <div class="btn-group">
-            <button id="capBtn" class="btn-analyze" onclick="captureAndAnalyze()" style="display:none;">📸 Capture & Analyze</button>
+            <button id="capBtn" class="btn-analyze" onclick="captureAndAnalyze()" style="display:none;">📸 Capture 3D Scan</button>
             <button class="btn-print" id="printBtn" onclick="window.print()">🖨️ Print Report</button>
         </div>
     </div>
 
-    <!-- REPORT -->
     <div id="report-content">
+        <img src="/static/logo.jpg" class="watermark">
+
+        <!-- PAGE 1 -->
         <div class="print-page-1">
             <div class="header">
-                <div class="header-left"><img src="/static/logo.jpg" alt="Logo"><div><h1>Clinical Report</h1><span>ID: <span id="report-id"></span></span></div></div>
+                <div class="header-left"><img src="/static/logo.jpg" alt="Logo"><div><h1>Clinical Skin Report</h1><div class="header-sub">ID: <span id="report-id"></span></div></div></div>
+                <div class="qr-code"></div>
             </div>
             <div class="patient-details">
-                <div class="input-group"><label>Name</label><input type="text" placeholder="Patient Name"></div>
+                <div class="input-group"><label>Patient Name</label><input type="text" placeholder="Name"></div>
                 <div class="input-group"><label>Age</label><input type="number" placeholder="0"></div>
                 <div class="input-group"><label>Gender</label><select><option>Female</option><option>Male</option></select></div>
                 <div class="input-group"><label>Date</label><input type="text" id="date-field"></div>
             </div>
-
-            <h3 class="section-title">🔍 Visual Spectrum Analysis</h3>
+            <div id="ai-narrative" class="ai-summary-box">Analyzing...</div>
+            <h3 class="section-title">🔍 Visual Spectrum & 3D Topology</h3>
             <div class="gallery-grid">
-                <div class="gallery-item"><img id="img-normal" src=""><p>Natural</p></div>
-                <div class="gallery-item"><img id="img-mesh" src=""><p>3D Mesh</p></div>
+                <div class="gallery-item"><img id="img-normal" src=""><p>Natural Light</p></div>
+                <div class="gallery-item"><img id="img-mesh" src="" style="border:2px solid #00e5ff"><p>3D Wireframe</p></div>
                 <div class="gallery-item"><img id="img-bw" class="filter-bw" src=""><p>Texture</p></div>
                 <div class="gallery-item"><img id="img-uv" class="filter-uv" src=""><p>UV Damage</p></div>
                 <div class="gallery-item"><img id="img-brown" class="filter-brown" src=""><p>Pigmentation</p></div>
@@ -128,42 +131,70 @@
                 <div class="gallery-item"><img id="img-thermal" class="filter-thermal" src=""><p>Inflammation</p></div>
                 <div class="gallery-item"><img id="img-glow" class="filter-glow" src=""><p>Porphyrins</p></div>
             </div>
-
-            <h3 class="section-title">📊 Biometric Data</h3>
-            <div class="chart-box"><canvas id="radarChart"></canvas></div>
+            <h3 class="section-title">📊 Biometric Balance</h3>
+            <div class="chart-box" style="height:200px"><canvas id="radarChart"></canvas></div>
         </div>
 
+        <!-- PAGE 2 -->
         <div class="print-page-2">
-            <h3 class="section-title">📝 Clinical Metrics</h3>
+            <div class="header" style="border: none; padding-bottom: 0;">
+                <h2 style="font-size: 18px; color: var(--primary); font-family: 'Playfair Display', serif;">Detailed Analysis & Treatment</h2>
+                <div class="qr-code"></div>
+            </div>
+            <hr style="border:0; border-top:1px solid #ddd; margin-bottom:20px;">
+
+            <h3 class="section-title">📝 Detailed Clinical Metrics</h3>
             <div class="data-grid">
                 <div>
                     <div class="metric-row"><div class="metric-header"><span>Health Score</span><span id="health-val">--</span></div><div class="progress-bg"><div id="health-bar" class="progress-fill" style="width:0; background:#28a745;"></div></div></div>
                     <div class="metric-row"><div class="metric-header"><span>Acne Probability</span><span id="acne-val">--</span></div><div class="progress-bg"><div id="acne-bar" class="progress-fill" style="width:0; background:#dc3545;"></div></div></div>
-                    <div class="metric-row"><div class="metric-header"><span>Stress Level</span><span id="stress-val">--</span></div><div class="progress-bg"><div id="stress-bar" class="progress-fill" style="width:0; background:#dc3545;"></div></div></div>
+                    <div class="metric-row"><div class="metric-header"><span>Biological Age</span><span id="age-val">--</span></div><div style="font-size:10px; color:#666; font-style:italic;">Based on surface texture</div></div>
                 </div>
                 <div>
                     <div class="metric-row"><div class="metric-header"><span>Pigmentation</span><span id="stain-val">--</span></div><div class="progress-bg"><div id="stain-bar" class="progress-fill" style="width:0; background:#ffc107;"></div></div></div>
-                    <div class="metric-row"><div class="metric-header"><span>Sleep / Fatigue</span><span id="sleep-val">--</span></div><div class="progress-bg"><div id="sleep-bar" class="progress-fill" style="width:0; background:#6c757d;"></div></div></div>
-                    <div class="metric-row"><div class="metric-header"><span>Cheek Dimples</span><span id="dimple-val">--</span></div></div>
+                    <div class="metric-row"><div class="metric-header"><span>Dark Circles</span><span id="circles-val">--</span></div><div class="progress-bg"><div id="circles-bar" class="progress-fill" style="width:0; background:#17a2b8;"></div></div></div>
+                    <div class="metric-row"><div class="metric-header"><span>Eye Fatigue</span><span id="fatigue-val">--</span></div><div class="progress-bg"><div id="fatigue-bar" class="progress-fill" style="width:0; background:#6c757d;"></div></div></div>
                 </div>
             </div>
 
-            <h3 class="section-title">📍 Thermal Defect Mapping</h3>
+            <!-- NEW: LIFESTYLE & STRUCTURAL ANALYSIS -->
+            <h3 class="section-title">🧬 Lifestyle & Structural Markers</h3>
+            <div class="lifestyle-box">
+                <div class="life-item"><span>Lack of Sleep Trace</span><span id="trace-sleep" class="life-val">--</span></div>
+                <div class="life-item"><span>Stress / Cortisol Trace</span><span id="trace-stress" class="life-val">--</span></div>
+                <div class="life-item"><span>Moles / Spot Detection</span><span id="trace-mole" class="life-val">--</span></div>
+                <div class="life-item"><span>Cheek Structure</span><span class="life-val">Visual Analysis Only</span></div>
+            </div>
+
+            <h3 class="section-title">📍 Composite Defect Mapping</h3>
             <div class="scan-container">
                 <canvas id="defect-canvas"></canvas>
                 <div class="scan-legend">
-                    <div><span class="dot dot-acne"></span>Inflammation</div>
-                    <div><span class="dot dot-pigment"></span>Pigmentation</div>
-                    <div><span class="dot dot-circles"></span>Dark Circles</div>
+                    <div class="legend-item"><span class="dot dot-acne"></span> Inflammation</div>
+                    <div class="legend-item"><span class="dot dot-pigment"></span> Pigmentation</div>
+                    <div class="legend-item"><span class="dot dot-circles"></span> Dark Circles</div>
                 </div>
             </div>
 
-            <h3 class="section-title">💊 Recommendations</h3>
-            <div style="background:#fff3cd; padding:10px; border:1px solid #ffeeba; margin-bottom:20px;">
-                <ul id="rec-list" style="padding-left:20px; margin:0;"></ul>
+            <div id="ai-recommendations" class="rec-box" style="display:none;">
+                <div style="font-weight: bold; color: #856404; margin-bottom: 5px;">✨ AI Suggested Regimen</div>
+                <ul id="rec-list" style="list-style: none; padding: 0; margin: 0;"></ul>
             </div>
+
+            <h3 class="section-title">💊 Prescription (Rx)</h3>
+            <table class="rx-table" style="width:100%; border-collapse:collapse; text-align:left; font-size:12px; margin-bottom:10px;">
+                <tr style="background:#004d40; color:white;"><th>Medicine</th><th>Dosage</th><th>Freq</th></tr>
+                <tr><td><input type="text" style="width:100%"></td><td><input type="text"></td><td><input type="text"></td></tr>
+                <tr><td><input type="text" style="width:100%"></td><td><input type="text"></td><td><input type="text"></td></tr>
+            </table>
+            <textarea style="width:98%; height:40px; border:1px solid #ccc; font-size:12px;" placeholder="Clinical Notes..."></textarea>
             
-            <div style="margin-top:50px; text-align:right; border-top:1px solid #000; width:200px; float:right;">Doctor's Signature</div>
+            <div style="margin-top:15px; text-align:right; border-top:1px solid #000; width:200px; float:right;">Doctor's Signature</div>
+            
+            <div class="footer-info">
+                <div><strong>Aestodent Clinic</strong><br>First Floor, Nahasons Business Complex, Anchappura<br>Parappanangadi P.O, Malappuram</div>
+                <div style="text-align: right;"><strong>Contact:</strong> +91 7994135507<br><strong>Email:</strong> aestodent@gmail.com</div>
+            </div>
         </div>
     </div>
 
@@ -171,10 +202,7 @@
         const videoElement = document.getElementsByClassName('input_video')[0];
         const canvasElement = document.getElementsByClassName('output_canvas')[0];
         const canvasCtx = canvasElement.getContext('2d');
-        const bufferCanvas = document.getElementById('buffer_canvas');
-        const bufferCtx = bufferCanvas.getContext('2d');
         const loader = document.getElementById('loader');
-        
         let radarChartInstance = null;
         let capturedImageOriginal = null;
         let capturedImageMesh = null;
@@ -194,7 +222,7 @@
                 document.getElementById('permission-overlay').style.display = 'none';
                 loader.style.display = 'block';
                 startCamera(stream);
-            }).catch(err => alert("Camera blocked."));
+            }).catch(err => { alert("Camera blocked."); });
         }
 
         function startCamera(stream) {
@@ -208,8 +236,6 @@
         function onResults(results) {
             loader.style.display = "none";
             document.getElementById('capBtn').style.display = "inline-block";
-            
-            // 1. Draw Visible Mesh Canvas (For Screen)
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
@@ -221,31 +247,29 @@
                 }
             }
             canvasCtx.restore();
-
-            // 2. Draw Clean Buffer Canvas (For Capture)
-            // THIS IS THE CRITICAL FIX: We save the clean image continuously
-            bufferCtx.drawImage(results.image, 0, 0, bufferCanvas.width, bufferCanvas.height);
-            capturedImageOriginal = bufferCanvas.toDataURL('image/jpeg', 0.9);
         }
 
         const faceMesh = new FaceMesh({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`});
         faceMesh.setOptions({maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
         faceMesh.onResults(onResults);
 
-        // --- CAPTURE & ANALYZE ---
         function captureAndAnalyze() {
-            // FIX: Use the 'capturedImageOriginal' which is already populated by onResults
-            if(!capturedImageOriginal) { alert("Camera warming up..."); return; }
+            // Mesh
+            canvasCtx.fillStyle = "black"; canvasCtx.fillRect(0,0,canvasElement.width,canvasElement.height);
+            if(currentLandmarks) { drawConnectors(canvasCtx, currentLandmarks, FACEMESH_TESSELATION, {color: '#00e5ff33', lineWidth:1}); drawConnectors(canvasCtx, currentLandmarks, FACEMESH_FACE_OVAL, {color: '#00e5ff', lineWidth:2}); }
+            const meshImage = canvasElement.toDataURL('image/jpeg');
+            document.getElementById('img-mesh').src = meshImage;
 
-            // 1. Capture Wireframe (from the visible canvas)
-            capturedImageMesh = canvasElement.toDataURL('image/jpeg');
-            document.getElementById('img-mesh').src = capturedImageMesh;
+            // Raw
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = videoElement.videoWidth; tempCanvas.height = videoElement.videoHeight;
+            tempCanvas.getContext('2d').drawImage(videoElement, 0, 0);
+            capturedImageOriginal = tempCanvas.toDataURL('image/jpeg');
 
-            // 2. Update Gallery with Clean Image
             const ids = ['img-normal','img-bw','img-uv','img-brown','img-red','img-thermal','img-glow'];
             ids.forEach(id => document.getElementById(id).src = capturedImageOriginal);
 
-            alert("Capturing... Processing Biometrics...");
+            alert("3D Scan Captured. Analyzing...");
 
             fetch('/analyze', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -253,24 +277,24 @@
             }).then(response => response.json()).then(data => {
                 if(data.success) {
                     const r = data.report;
-                    // Metrics
+                    
                     document.getElementById('health-val').innerText = r.health + "%";
                     document.getElementById('acne-val').innerText = r.acne + "%";
                     document.getElementById('circles-val').innerText = r.circles + "%";
                     document.getElementById('stain-val').innerText = r.stain + "%";
-                    document.getElementById('sleep-val').innerText = r.fatigue + "%";
-                    document.getElementById('stress-val').innerText = r.stress + "%";
-                    document.getElementById('dimple-val').innerText = r.dimples;
+                    document.getElementById('fatigue-val').innerText = r.fatigue + "%";
+                    document.getElementById('age-val').innerText = r.age + " Yrs";
 
-                    // Bars
                     setBar('health-bar', r.health, true);
                     setBar('acne-bar', r.acne, false);
                     setBar('stain-bar', r.stain, false);
                     setBar('circles-bar', r.circles, false);
-                    setBar('sleep-bar', r.fatigue, false);
-                    setBar('stress-bar', r.stress, false);
+                    setBar('fatigue-bar', r.fatigue, false);
 
-                    generateThermalMap(r);
+                    document.getElementById('ai-narrative').innerHTML = `Skin Health: <strong>${r.health}%</strong>. Barrier integrity: ${r.health > 70 ? 'intact' : 'compromised'}.`;
+
+                    generateLifestyleAnalysis(r);
+                    generateProfessionalMap(r);
                     generateRecommendations(r);
                     
                     if (radarChartInstance) radarChartInstance.destroy();
@@ -286,8 +310,28 @@
             }).catch(err => alert("Server Error: " + err));
         }
 
-        // --- THERMAL MAP ---
-        function generateThermalMap(r) {
+        // --- NEW LIFESTYLE LOGIC ---
+        function generateLifestyleAnalysis(r) {
+            // 1. SLEEP: Derived from Dark Circles and Fatigue
+            const sleepScore = (r.circles + r.fatigue) / 2;
+            const sleepEl = document.getElementById('trace-sleep');
+            if(sleepScore > 50) { sleepEl.innerText = "High Indication (Lack of Sleep)"; sleepEl.className = "life-val val-bad"; }
+            else { sleepEl.innerText = "Normal / Rested"; sleepEl.className = "life-val val-ok"; }
+
+            // 2. STRESS: Derived from Negative Emotions + Skin Issues
+            const negEmotion = r.emotions.sadness + r.emotions.anger + r.emotions.fear;
+            const stressMarkers = (negEmotion / 3) + (r.acne * 0.3) + ((100-r.health)*0.2);
+            const stressEl = document.getElementById('trace-stress');
+            if(stressMarkers > 30) { stressEl.innerText = "Signs of Stress Detected"; stressEl.className = "life-val val-bad"; }
+            else { stressEl.innerText = "Low / Balanced"; stressEl.className = "life-val val-ok"; }
+
+            // 3. MOLES: Derived from Stain
+            const moleEl = document.getElementById('trace-mole');
+            if(r.stain > 60) { moleEl.innerText = "Pigmented Spots / Moles Detected"; moleEl.className = "life-val val-bad"; }
+            else { moleEl.innerText = "Clear"; moleEl.className = "life-val val-ok"; }
+        }
+
+        function generateProfessionalMap(r) {
             if (!currentLandmarks || !capturedImageOriginal) return;
             const canvas = document.getElementById('defect-canvas');
             const ctx = canvas.getContext('2d');
@@ -295,13 +339,13 @@
             img.src = capturedImageOriginal;
             img.onload = () => {
                 canvas.width = img.width; canvas.height = img.height;
-                
-                // Thermal Filter
-                ctx.filter = 'contrast(150%) saturate(200%) invert(100%) hue-rotate(180deg)';
+                ctx.filter = 'grayscale(100%) contrast(1.2) brightness(0.9)';
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 ctx.filter = 'none';
-
+                
+                // Composite Mode for Glow
                 ctx.globalCompositeOperation = 'screen';
+
                 if (r.acne > 40) drawBlurredZone(ctx, currentLandmarks, ZONES.TZONE, 'rgba(255, 0, 0, 0.6)', 30);
                 if (r.circles > 50) {
                     drawBlurredZone(ctx, currentLandmarks, ZONES.EYE_LEFT_BAG, 'rgba(0, 255, 255, 0.6)', 20);
@@ -315,7 +359,7 @@
             };
         }
 
-        function drawBlurredZone(ctx, landmarks, indices, color, blur) {
+        function drawBlurredZone(ctx, landmarks, indices, color, blurAmount) {
             ctx.save();
             ctx.beginPath();
             const pt0 = landmarks[indices[0]];
@@ -326,22 +370,25 @@
             }
             ctx.closePath();
             ctx.fillStyle = color;
-            ctx.shadowColor = color; ctx.shadowBlur = blur;
+            ctx.shadowColor = color;
+            ctx.shadowBlur = blurAmount;
             ctx.fill();
             ctx.restore();
         }
 
         function generateRecommendations(r) {
             const list = document.getElementById('rec-list');
-            list.innerHTML = "";
-            if (r.acne > 40) list.innerHTML += "<li>Salicylic Acid Cleanser (Acne Control)</li>";
-            if (r.circles > 50) list.innerHTML += "<li>Caffeine Eye Serum (Dark Circles)</li>";
-            if (r.health < 60) list.innerHTML += "<li>Hyaluronic Acid (Hydration)</li>";
-            list.innerHTML += "<li>SPF 50+ Sunscreen (Daily Protection)</li>";
-            document.getElementById('ai-recommendations').style.display = 'block';
+            const box = document.getElementById('ai-recommendations');
+            list.innerHTML = ""; let found = false;
+            if (r.acne > 40) { addRec("Salicylic Acid", "Acne Control"); addRec("Niacinamide", "Inflammation"); found=true; }
+            if (r.circles > 50) { addRec("Caffeine Serum", "Dark Circles"); found=true; }
+            if (r.health < 60) { addRec("Hyaluronic Acid", "Barrier Repair"); found=true; }
+            addRec("SPF 50+ Sunscreen", "Protection");
+            box.style.display = found ? 'block' : 'none';
         }
-
+        function addRec(n, r) { const li = document.createElement('li'); li.innerHTML = `<span>${n}</span> <span style="font-size:10px;">${r}</span>`; document.getElementById('rec-list').appendChild(li); }
         function setBar(id, val, highGood) { const el = document.getElementById(id); el.style.width = val + "%"; el.style.backgroundColor = (highGood ? val > 50 : val < 50) ? "#28a745" : "#dc3545"; }
+        
         document.getElementById('report-id').innerText = "3D-" + Math.floor(Math.random() * 10000);
         document.getElementById('date-field').value = new Date().toLocaleDateString();
     </script>
