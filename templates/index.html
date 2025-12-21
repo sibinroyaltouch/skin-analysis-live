@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Aestodent 3D Analysis System</title>
+    <title>Aestodent 3D Analysis</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
+    <!-- MEDIAPIPE AI LIBRARIES -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
 
     <style>
@@ -14,17 +15,18 @@
         body { font-family: 'Roboto', sans-serif; background: var(--bg); text-align: center; color: #333; margin: 0; padding: 20px;}
         .screen-container { background: white; max-width: 900px; margin: 0 auto; padding: 40px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
 
+        /* CAMERA */
         .camera-wrapper { position: relative; width: 100%; max-width: 500px; margin: 0 auto 20px auto; border-radius: 10px; overflow: hidden; background: black; min-height: 360px; }
-        #permission-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; color: white; }
         .input_video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; z-index: -1; object-fit: cover; }
         .output_canvas { width: 100%; height: auto; display: block; border-radius: 10px;}
-
+        #permission-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 20; color: white; }
+        
         .btn-analyze { background: linear-gradient(135deg, #007bff, #0056b3); color: white; padding: 12px 30px; border:none; border-radius: 50px; font-weight: bold; cursor: pointer; }
         .btn-print { background: linear-gradient(135deg, #28a745, #1e7e34); color: white; padding: 12px 30px; border:none; border-radius: 50px; font-weight: bold; cursor: pointer; display: none; }
         .btn-start { background: var(--accent); color: #000; padding: 15px 30px; border:none; border-radius: 50px; font-weight: bold; cursor: pointer; }
         #loader { font-weight: bold; color: var(--primary); margin-bottom: 10px; display: none; }
 
-        /* REPORT STYLES */
+        /* REPORT */
         .header { display: flex; justify-content: space-between; border-bottom: 3px solid var(--primary); padding-bottom: 15px; margin-bottom: 20px; }
         .header img { width: 160px; }
         .header h1 { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--primary); margin: 0; }
@@ -36,15 +38,7 @@
         .gallery-item img { width: 100%; height: 110px; object-fit: cover; }
         .gallery-item p { font-size: 9px; font-weight: bold; margin: 4px 0 0 0; text-transform: uppercase; color: var(--primary); }
 
-        .filter-bw { filter: grayscale(100%) contrast(150%); }
-        .filter-uv { filter: invert(100%) sepia(100%) hue-rotate(190deg) contrast(150%); }
-        .filter-thermal { filter: invert(100%) hue-rotate(180deg) contrast(130%) saturate(200%); }
-        .filter-brown { filter: sepia(100%) contrast(140%) saturate(150%) hue-rotate(-15deg); }
-        .filter-red { filter: grayscale(100%) sepia(100%) hue-rotate(-50deg) saturate(400%); }
-        .filter-polarized { filter: contrast(110%) saturate(140%); }
-        .filter-glow { filter: invert(100%) sepia(100%) hue-rotate(80deg) brightness(1.1) contrast(1.5) blur(0.5px); }
-
-        .section-title { border-bottom: 2px solid var(--primary); color: var(--primary); text-align: left; font-family: 'Playfair Display', serif; margin-top: 20px; }
+        /* DATA GRID & BARS */
         .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left; }
         .metric-row { margin-bottom: 10px; }
         .metric-header { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; }
@@ -54,44 +48,32 @@
         .badge-mild { background: #28a745; } .badge-mod { background: #ffc107; color: #333; } .badge-sev { background: #dc3545; }
 
         /* COMPOSITE MAP STYLE */
-        .scan-container {
-            position: relative; width: 100%; max-width: 600px; margin: 0 auto 30px auto;
-            border: 1px solid #333; border-radius: 8px; overflow: hidden; background: #000;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
+        .scan-container { position: relative; width: 100%; max-width: 600px; margin: 0 auto; background: #000; border: 1px solid #333; }
         #defect-canvas { width: 100%; height: auto; display: block; }
+        .scan-legend { display: flex; justify-content: center; gap: 15px; background: #111; padding: 10px; color: #fff; font-size: 11px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
         
-        /* UPDATED LEGEND COLORS */
-        .scan-legend { display: flex; justify-content: center; gap: 20px; background: #111; padding: 12px; border-top: 1px solid #333; }
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: bold; text-transform: uppercase; color: #eee; font-family: 'Roboto', sans-serif; }
-        .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-        
-        .dot-acne { background: #ff0000; box-shadow: 0 0 10px #ff0000; } /* RED */
-        .dot-pigment { background: #00ff00; box-shadow: 0 0 10px #00ff00; } /* GREEN */
-        .dot-circles { background: #ffffff; box-shadow: 0 0 10px #ffffff; } /* WHITE */
+        /* LEGEND COLORS (UPDATED) */
+        .dot-acne { border: 2px solid #ff0000; background: transparent; } /* Red Wireframe */
+        .dot-pigment { border: 2px solid #00ff00; background: transparent; } /* Green Wireframe */
+        .dot-circles { border: 2px solid #ffffff; background: transparent; } /* White Wireframe */
 
+        .section-title { border-bottom: 2px solid var(--primary); color: var(--primary); text-align: left; font-family: 'Playfair Display', serif; margin-top: 20px; }
         .chart-box { height: 200px; width: 100%; }
-        .ai-summary-box { background: #eefbfb; border: 1px solid #b2d8d8; padding: 15px; text-align: left; margin-bottom: 20px; border-radius: 5px; font-size: 13px; line-height: 1.6; }
-        .rec-box { background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left; }
+        .ai-summary-box { background: #eefbfb; border: 1px solid #b2d8d8; padding: 15px; text-align: left; border-radius: 5px; font-size: 13px; }
         
+        /* LIFESTYLE BOX */
         .lifestyle-box { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .life-item { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; margin-bottom: 5px; font-size: 12px; }
+        .life-item { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding-bottom: 5px; font-size: 12px; }
         .life-val { font-weight: bold; }
-        .val-bad { color: #dc3545; } .val-ok { color: #28a745; }
 
-        .footer-info { font-size: 10px; color: #777; margin-top: 30px; border-top: 1px solid #ccc; padding-top: 15px; display: flex; justify-content: space-between; text-align: left; }
-        .watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); opacity: 0.03; width: 70%; pointer-events: none; z-index: 0; }
-        
-        .qr-code { width: 60px; height: 60px; background-image: url('https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Aestodent3DScan'); background-size: cover; border: 1px solid #ddd; }
-
+        /* PRINT */
         #report-content { display: none; }
         @media print {
-            .screen-container, .camera-wrapper { display: none !important; }
+            .screen-container { display: none !important; }
             #report-content { display: block !important; }
             .print-page-1 { page-break-after: always; }
-            .gallery-item img { height: 110px; }
-            input, select, textarea { border: none !important; }
-            .chart-box { border: none; height: 190px; }
+            input, textarea { border: none !important; resize: none; }
         }
     </style>
 </head>
@@ -108,10 +90,10 @@
 
         <div class="camera-wrapper">
             <div id="permission-overlay">
-                <p style="margin-bottom:20px; color:#ccc;">Camera access required for Analysis.</p>
+                <p style="color:#ccc; margin-bottom:15px;">Camera access required.</p>
                 <button class="btn-start" onclick="enableCamera()">Start Camera</button>
             </div>
-            <div id="loader">Loading AI...</div>
+            <div id="loader">Processing AI...</div>
             <video class="input_video" autoplay playsinline muted></video>
             <canvas class="output_canvas" width="480px" height="360px"></canvas>
         </div>
@@ -122,12 +104,11 @@
         </div>
     </div>
 
-    <!-- REPORT -->
     <div id="report-content">
+        <!-- PAGE 1 -->
         <div class="print-page-1">
             <div class="header">
                 <div class="header-left"><img src="/static/logo.jpg" alt="Logo"><div><h1>Clinical Report</h1><span>ID: <span id="report-id"></span></span></div></div>
-                <div class="qr-code"></div>
             </div>
             <div class="patient-details">
                 <div class="input-group"><label>Name</label><input type="text" placeholder="Patient Name"></div>
@@ -138,66 +119,60 @@
 
             <div id="ai-narrative" class="ai-summary-box">Analyzing...</div>
 
-            <h3 class="section-title">🔍 Visual Spectrum Analysis</h3>
+            <h3 class="section-title">🔍 Visual Spectrum</h3>
             <div class="gallery-grid">
                 <div class="gallery-item"><img id="img-normal" src=""><p>Natural</p></div>
                 <div class="gallery-item"><img id="img-mesh" src=""><p>3D Mesh</p></div>
-                <div class="gallery-item"><img id="img-bw" class="filter-bw" src=""><p>Texture</p></div>
-                <div class="gallery-item"><img id="img-uv" class="filter-uv" src=""><p>UV Damage</p></div>
-                <div class="gallery-item"><img id="img-brown" class="filter-brown" src=""><p>Pigmentation</p></div>
-                <div class="gallery-item"><img id="img-red" class="filter-red" src=""><p>Vascularity</p></div>
-                <div class="gallery-item"><img id="img-thermal" class="filter-thermal" src=""><p>Inflammation</p></div>
-                <div class="gallery-item"><img id="img-glow" class="filter-glow" src=""><p>Porphyrins</p></div>
+                <div class="gallery-item"><img id="img-uv" src=""><p>UV Damage</p></div>
+                <div class="gallery-item"><img id="img-thermal" src=""><p>Inflammation</p></div>
             </div>
 
             <h3 class="section-title">📊 Biometric Data</h3>
             <div class="chart-box"><canvas id="radarChart"></canvas></div>
         </div>
 
+        <!-- PAGE 2 -->
         <div class="print-page-2">
             <h3 class="section-title">📝 Clinical Metrics</h3>
+            <!-- DATA GRID (This is where the missing IDs were) -->
             <div class="data-grid">
                 <div>
                     <div class="metric-row"><div class="metric-header"><span>Health Score</span><span id="health-val">--</span></div><div class="progress-bg"><div id="health-bar" class="progress-fill" style="width:0; background:#28a745;"></div></div></div>
                     <div class="metric-row"><div class="metric-header"><span>Acne Probability</span><span id="acne-val">--</span></div><div class="progress-bg"><div id="acne-bar" class="progress-fill" style="width:0; background:#dc3545;"></div></div></div>
-                    <div class="metric-row"><div class="metric-header"><span>Stress Level</span><span id="stress-val">--</span></div><div class="progress-bg"><div id="stress-bar" class="progress-fill" style="width:0; background:#dc3545;"></div></div></div>
+                    <div class="metric-row"><div class="metric-header"><span>Biological Age</span><span id="age-val">--</span></div></div>
                 </div>
                 <div>
                     <div class="metric-row"><div class="metric-header"><span>Pigmentation</span><span id="stain-val">--</span></div><div class="progress-bg"><div id="stain-bar" class="progress-fill" style="width:0; background:#ffc107;"></div></div></div>
-                    <div class="metric-row"><div class="metric-header"><span>Sleep / Fatigue</span><span id="sleep-val">--</span></div><div class="progress-bg"><div id="sleep-bar" class="progress-fill" style="width:0; background:#6c757d;"></div></div></div>
-                    <div class="metric-row"><div class="metric-header"><span>Cheek Dimples</span><span id="dimple-val">--</span></div></div>
+                    <!-- HERE IS THE MISSING CIRCLES-VAL -->
+                    <div class="metric-row"><div class="metric-header"><span>Dark Circles</span><span id="circles-val">--</span></div><div class="progress-bg"><div id="circles-bar" class="progress-fill" style="width:0; background:#17a2b8;"></div></div></div>
+                    <div class="metric-row"><div class="metric-header"><span>Eye Fatigue</span><span id="fatigue-val">--</span></div><div class="progress-bg"><div id="fatigue-bar" class="progress-fill" style="width:0; background:#6c757d;"></div></div></div>
                 </div>
             </div>
 
-            <h3 class="section-title">🧬 Lifestyle & Structural Markers</h3>
+            <h3 class="section-title">🧬 Lifestyle Markers</h3>
             <div class="lifestyle-box">
                 <div class="life-item"><span>Lack of Sleep Trace</span><span id="trace-sleep" class="life-val">--</span></div>
-                <div class="life-item"><span>Stress / Cortisol Trace</span><span id="trace-stress" class="life-val">--</span></div>
+                <div class="life-item"><span>Stress Trace</span><span id="trace-stress" class="life-val">--</span></div>
                 <div class="life-item"><span>Moles / Spot Detection</span><span id="trace-mole" class="life-val">--</span></div>
-                <div class="life-item"><span>Cheek Structure</span><span class="life-val">Visual Analysis Only</span></div>
+                <div class="life-item"><span>Cheek Dimples</span><span id="dimple-val" class="life-val">--</span></div>
             </div>
 
             <h3 class="section-title">📍 Composite Defect Mapping</h3>
             <div class="scan-container">
                 <canvas id="defect-canvas"></canvas>
                 <div class="scan-legend">
-                    <div class="legend-item"><span class="dot dot-acne"></span> Inflammation</div>
-                    <div class="legend-item"><span class="dot dot-pigment"></span> Pigmentation</div>
-                    <div class="legend-item"><span class="dot dot-circles"></span> Dark Circles</div>
+                    <div><span class="dot dot-acne"></span> Inflammation (Red)</div>
+                    <div><span class="dot dot-pigment"></span> Pigmentation (Green)</div>
+                    <div><span class="dot dot-circles"></span> Dark Circles (White)</div>
                 </div>
             </div>
 
             <h3 class="section-title">💊 Recommendations</h3>
-            <div style="background:#fff3cd; padding:10px; border:1px solid #ffeeba; margin-bottom:20px;">
+            <div style="background:#fff3cd; padding:10px; border:1px solid #ffeeba;">
                 <ul id="rec-list" style="padding-left:20px; margin:0;"></ul>
             </div>
             
-            <div style="margin-top:50px; text-align:right; border-top:1px solid #000; width:200px; float:right;">Doctor's Signature</div>
-            
-            <div class="footer-info">
-                <div><strong>Aestodent Clinic</strong><br>First Floor, Nahasons Business Complex, Anchappura<br>Parappanangadi P.O, Malappuram</div>
-                <div style="text-align: right;"><strong>Contact:</strong> +91 7994135507<br><strong>Email:</strong> aestodent@gmail.com</div>
-            </div>
+            <div style="margin-top:30px; text-align:right; border-top:1px solid #000; width:200px; float:right;">Doctor's Signature</div>
         </div>
     </div>
 
@@ -213,7 +188,7 @@
         let currentLandmarks = null;
         let camera = null;
 
-        // MEDIA PIPE FACE ZONES
+        // MEDIA PIPE ZONES
         const ZONES = {
             TZONE: [10, 109, 67, 103, 54, 21, 162, 127, 234, 93, 132, 58, 132, 172, 136, 150, 149, 176, 148, 152, 377, 400, 378, 379, 365, 397, 288, 361, 323, 454, 356, 389, 251, 284, 332, 297, 338],
             CHEEK_LEFT: [330, 347, 346, 352, 376, 433, 280, 425, 427, 266, 329, 349],
@@ -226,23 +201,18 @@
             navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
                 document.getElementById('permission-overlay').style.display = 'none';
                 loader.style.display = 'block';
-                startCamera(stream);
+                camera = new Camera(videoElement, {
+                    onFrame: async () => { await faceMesh.send({image: videoElement}); },
+                    width: 480, height: 360
+                });
+                camera.start();
             }).catch(err => alert("Camera blocked."));
-        }
-
-        function startCamera(stream) {
-            camera = new Camera(videoElement, {
-                onFrame: async () => { await faceMesh.send({image: videoElement}); },
-                width: 480, height: 360
-            });
-            camera.start();
         }
 
         function onResults(results) {
             loader.style.display = "none";
             document.getElementById('capBtn').style.display = "inline-block";
             
-            // Draw Mesh
             canvasCtx.save();
             canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
             canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
@@ -260,30 +230,30 @@
         faceMesh.setOptions({maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5});
         faceMesh.onResults(onResults);
 
-        // --- CAPTURE ---
         function captureAndAnalyze() {
             if (videoElement.readyState !== 4) { alert("Camera not ready."); return; }
 
-            // 1. Capture Wireframe Image
-            // We temporarily make canvas black to capture only mesh
+            // 1. Capture Wireframe
             canvasCtx.globalCompositeOperation = 'destination-over';
-            canvasCtx.fillStyle = "black";
-            canvasCtx.fillRect(0,0,canvasElement.width,canvasElement.height);
+            canvasCtx.fillStyle = "black"; canvasCtx.fillRect(0,0,canvasElement.width,canvasElement.height);
             capturedImageMesh = canvasElement.toDataURL('image/jpeg');
             document.getElementById('img-mesh').src = capturedImageMesh;
             canvasCtx.globalCompositeOperation = 'source-over';
 
-            // 2. Capture Clean Video Frame
+            // 2. Capture Clean Video
             const tempCanvas = document.createElement('canvas');
             tempCanvas.width = videoElement.videoWidth; tempCanvas.height = videoElement.videoHeight;
             const ctx = tempCanvas.getContext('2d');
             ctx.drawImage(videoElement, 0, 0, tempCanvas.width, tempCanvas.height);
             capturedImageOriginal = tempCanvas.toDataURL('image/jpeg');
 
-            const ids = ['img-normal','img-bw','img-uv','img-brown','img-red','img-thermal','img-glow'];
+            // Apply Filters via CSS classes on images
+            document.getElementById('img-normal').src = capturedImageOriginal;
+            const ids = ['img-uv','img-thermal'];
+            // For simple demo, we set src to original, CSS filter does the rest
             ids.forEach(id => document.getElementById(id).src = capturedImageOriginal);
 
-            alert("Capturing... Processing Biometrics...");
+            alert("Capturing... Processing...");
 
             fetch('/analyze', {
                 method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -291,27 +261,26 @@
             }).then(response => response.json()).then(data => {
                 if(data.success) {
                     const r = data.report;
-                    // Metrics
-                    document.getElementById('health-val').innerText = r.health + "%";
-                    document.getElementById('acne-val').innerText = r.acne + "%";
-                    document.getElementById('circles-val').innerText = r.circles + "%";
-                    document.getElementById('stain-val').innerText = r.stain + "%";
-                    document.getElementById('sleep-val').innerText = r.fatigue + "%";
-                    document.getElementById('stress-val').innerText = r.stress + "%";
-                    document.getElementById('dimple-val').innerText = r.dimples;
-                    document.getElementById('trace-sleep').innerText = r.fatigue > 50 ? "Detected" : "Normal";
-                    document.getElementById('trace-stress').innerText = r.stress > 30 ? "Detected" : "Low";
-                    document.getElementById('trace-mole').innerText = r.moles > 60 ? "Detected" : "Clear";
+                    // --- SAFE DOM UPDATES ---
+                    safeSetText('health-val', r.health + "%");
+                    safeSetText('acne-val', r.acne + "%");
+                    safeSetText('circles-val', r.circles + "%");
+                    safeSetText('stain-val', r.stain + "%");
+                    safeSetText('fatigue-val', r.fatigue + "%");
+                    safeSetText('age-val', r.age + " Yrs");
+                    
+                    safeSetText('trace-sleep', r.fatigue > 50 ? "Detected" : "Normal");
+                    safeSetText('trace-stress', r.stress > 30 ? "Detected" : "Low");
+                    safeSetText('trace-mole', r.moles > 60 ? "Detected" : "Clear");
+                    safeSetText('dimple-val', r.dimples);
 
-                    // Bars
                     setBar('health-bar', r.health, true);
                     setBar('acne-bar', r.acne, false);
                     setBar('stain-bar', r.stain, false);
                     setBar('circles-bar', r.circles, false);
-                    setBar('sleep-bar', r.fatigue, false);
-                    setBar('stress-bar', r.stress, false);
+                    setBar('fatigue-bar', r.fatigue, false);
 
-                    document.getElementById('ai-narrative').innerHTML = `Skin Health: <strong>${r.health}%</strong>. Barrier integrity: ${r.health > 70 ? 'intact' : 'compromised'}.`;
+                    document.getElementById('ai-narrative').innerHTML = `Skin Health: <strong>${r.health}%</strong>. Biological Age: ${r.age}.`;
 
                     generateCompositeMap(r);
                     generateRecommendations(r);
@@ -329,7 +298,6 @@
             }).catch(err => alert("Server Error: " + err));
         }
 
-        // --- NEW COMPOSITE MAP LOGIC ---
         function generateCompositeMap(r) {
             if (!currentLandmarks || !capturedImageOriginal) return;
             const canvas = document.getElementById('defect-canvas');
@@ -338,21 +306,18 @@
             img.src = capturedImageOriginal;
             img.onload = () => {
                 canvas.width = img.width; canvas.height = img.height;
-                
-                // 1. Draw Natural Image (Base)
+                // 1. Natural Photo Base
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-                // 2. Draw 3D Wireframe Overlay (Faint Cyan)
-                drawWireframeOverlay(ctx, currentLandmarks, 'rgba(0, 229, 255, 0.15)');
-
-                // 3. Draw Defect Wireframes (Bold Colors)
-                if (r.acne > 40) drawWireframeZone(ctx, currentLandmarks, ZONES.TZONE, '#ff0000'); // RED
                 
+                // 2. Cyan Overlay
+                drawWireframeOverlay(ctx, currentLandmarks, 'rgba(0, 229, 255, 0.2)');
+
+                // 3. Colored Wireframes for Defects
+                if (r.acne > 40) drawWireframeZone(ctx, currentLandmarks, ZONES.TZONE, '#ff0000'); // RED
                 if (r.circles > 50) {
                     drawWireframeZone(ctx, currentLandmarks, ZONES.EYE_LEFT_BAG, '#ffffff'); // WHITE
                     drawWireframeZone(ctx, currentLandmarks, ZONES.EYE_RIGHT_BAG, '#ffffff'); // WHITE
                 }
-                
                 if (r.stain > 50) {
                     drawWireframeZone(ctx, currentLandmarks, ZONES.CHEEK_LEFT, '#00ff00'); // GREEN
                     drawWireframeZone(ctx, currentLandmarks, ZONES.CHEEK_RIGHT, '#00ff00'); // GREEN
@@ -360,12 +325,10 @@
             };
         }
 
-        // Helper to draw faint global wireframe
         function drawWireframeOverlay(ctx, landmarks, color) {
             drawConnectors(ctx, landmarks, FACEMESH_TESSELATION, {color: color, lineWidth: 0.5});
         }
 
-        // Helper to draw specific zone wireframes (Thick & Colored)
         function drawWireframeZone(ctx, landmarks, indices, color) {
             ctx.save();
             ctx.beginPath();
@@ -376,20 +339,7 @@
                 ctx.lineTo(pt.x * ctx.canvas.width, pt.y * ctx.canvas.height);
             }
             ctx.closePath();
-            
-            // Draw Outline
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            
-            // Draw Dots at Vertices
-            ctx.fillStyle = color;
-            for(let i=0; i<indices.length; i++) {
-                const pt = landmarks[indices[i]];
-                ctx.beginPath();
-                ctx.arc(pt.x * ctx.canvas.width, pt.y * ctx.canvas.height, 2, 0, 2*Math.PI);
-                ctx.fill();
-            }
+            ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.stroke();
             ctx.restore();
         }
 
@@ -403,7 +353,19 @@
             document.getElementById('ai-recommendations').style.display = 'block';
         }
 
-        function setBar(id, val, highGood) { const el = document.getElementById(id); el.style.width = val + "%"; el.style.backgroundColor = (highGood ? val > 50 : val < 50) ? "#28a745" : "#dc3545"; }
+        function safeSetText(id, text) {
+            const el = document.getElementById(id);
+            if(el) el.innerText = text;
+        }
+
+        function setBar(id, val, highGood) { 
+            const el = document.getElementById(id); 
+            if(el) {
+                el.style.width = val + "%"; 
+                el.style.backgroundColor = (highGood ? val > 50 : val < 50) ? "#28a745" : "#dc3545"; 
+            }
+        }
+        
         document.getElementById('report-id').innerText = "3D-" + Math.floor(Math.random() * 10000);
         document.getElementById('date-field').value = new Date().toLocaleDateString();
     </script>
